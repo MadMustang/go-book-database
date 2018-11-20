@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
 //Main Server Function
@@ -14,24 +17,42 @@ func main() {
 	//Initialize router
 	r := mux.NewRouter()
 
-	//Test
-	people = append(people, Person{ID: "1", Firstname: "John", Lastname: "Doe", Address: &Address{City: "City X", State: "State X"}})
-	people = append(people, Person{ID: "2", Firstname: "Koko", Lastname: "Doe", Address: &Address{City: "City Z", State: "State Y"}})
+	//Specify server port
+	err := godotenv.Load() //Loads the dotenv file
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	port := os.Getenv("Server_Port") //Grabs the port number from the dotenv
+
+	//Validate that the port exists in the config file
+	if port == "" {
+		log.Fatal("No port number. You must specify port number!")
+	}
+
+	//Test mock data
+	books = append(books, Book{
+		ID:     "1",
+		Title:  "IT",
+		Author: "Stephen King",
+	})
 
 	//Define handlers and their functions
 	r.HandleFunc("/", hello).Methods("GET")
-	r.HandleFunc("/people", GetPeople).Methods("GET")
-	r.HandleFunc("/people/{id}", GetPerson).Methods("GET")
-	r.HandleFunc("/people/{id}", CreatePerson).Methods("POST")
-	r.HandleFunc("/people/{id}", DeletePerson).Methods("DELETE")
+	r.HandleFunc("/books", GetBooks).Methods("GET")
+	r.HandleFunc("/book/{id}", GetBook).Methods("GET")
+	r.HandleFunc("/book", CreateBook).Methods("POST")
+	r.HandleFunc("/book/{id}", UpdateBook).Methods("PUT")
+	r.HandleFunc("/book/{id}", DeleteBook).Methods("DELETE")
 
 	//Running the server
-	log.Fatal(http.ListenAndServe(":3000", r))
+	fmt.Println("Server started on port " + port)
+	log.Fatal(http.ListenAndServe(":"+port, r))
 }
 
 //Test Handler
 func hello(w http.ResponseWriter, r *http.Request) {
 
+	w.Header().Set("Content-Type", "application/json")
 	//I used a map
 	greet := map[string]string{
 		"salutations": "Hello there",
@@ -42,57 +63,127 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(greet)
 }
 
-// Person object
-type Person struct {
-	ID        string   `json:"id,omitempty"`
-	Firstname string   `json:"firstname,omitempty"`
-	Lastname  string   `json:"lastname,omitempty"`
-	Address   *Address `json:"address,omitempty"`
+// Book object
+type Book struct {
+	ID     string `json:"id"`
+	Title  string `json:"title"`
+	Author string `json:"author"`
 }
 
-//Address Object
-type Address struct {
-	City  string `json:"city,omitempty"`
-	State string `json:"state,omitempty"`
+var books []Book
+
+// GetBooks : Retrieving all the books in the database
+func GetBooks(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json") //Response content header
+	w.WriteHeader(http.StatusOK)                       //Http status code
+	json.NewEncoder(w).Encode(books)
 }
 
-var people []Person
+// GetBook : Getting a specific book by ID
+func GetBook(w http.ResponseWriter, r *http.Request) {
 
-// GetPeople : Getting everyone in the list
-func GetPeople(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(people)
-}
-
-// GetPerson : Getting a specific person by ID
-func GetPerson(w http.ResponseWriter, r *http.Request) {
+	//Get parameters from request
 	params := mux.Vars(r)
-	for _, item := range people {
+
+	//Itterate & find
+	for _, item := range books {
 		if item.ID == params["id"] {
+
+			//Return the found book
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(item)
 			return
 		}
 	}
-	json.NewEncoder(w).Encode(&Person{})
+
+	//If the book is not found, send error response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(map[string]string{
+		"Response": "No such book in this library",
+	})
 }
 
-// CreatePerson : Creating a new ID
-func CreatePerson(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	var person Person
-	_ = json.NewDecoder(r.Body).Decode(&person)
-	person.ID = params["id"]
-	people = append(people, person)
-	json.NewEncoder(w).Encode(people)
+// CreateBook : inserting a new book into the library
+func CreateBook(w http.ResponseWriter, r *http.Request) {
+
+	//Making the insertion from the request body
+	var book Book
+	_ = json.NewDecoder(r.Body).Decode(&book)
+	books = append(books, book) //Argument: the list, the new item
+
+	//Returns the created index
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(book)
 }
 
-// DeletePerson : Deleting an existing person
-func DeletePerson(w http.ResponseWriter, r *http.Request) {
+// DeleteBook : Deleting an existing book from the database/library
+func DeleteBook(w http.ResponseWriter, r *http.Request) {
+
+	//Get Parametters from request
 	params := mux.Vars(r)
-	for index, item := range people {
+
+	//Itterate & find
+	for index, item := range books {
 		if item.ID == params["id"] {
-			people = append(people[:index], people[index+1:]...)
-			break
+
+			//Getting the data of the book
+			b := item
+
+			//Delete book from databse
+			books = append(books[:index], books[index+1:]...)
+
+			//Return the data of the deleted book
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			json.NewEncoder(w).Encode(b)
+			return
 		}
-		json.NewEncoder(w).Encode(people)
 	}
+
+	//If the book is not found, send error response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(map[string]string{
+		"Response": "No such book in this library",
+	})
+}
+
+// UpdateBook : Update the book's information
+func UpdateBook(w http.ResponseWriter, r *http.Request) {
+
+	//Get Parametters from request
+	params := mux.Vars(r)
+
+	//Making the insertion from the request body
+	var book Book
+	_ = json.NewDecoder(r.Body).Decode(&book)
+
+	//Itterate & find
+	for index, item := range books {
+		if item.ID == params["id"] {
+
+			//Delete the book
+			books = append(books[:index], books[index+1:]...)
+
+			//Update the book
+			book.ID = item.ID
+			books = append(books, book)
+
+			//Return the data of the updated book
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			json.NewEncoder(w).Encode(book)
+			return
+		}
+	}
+
+	//If the book is not found, send error response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(map[string]string{
+		"Response": "No such book in this library",
+	})
 }
