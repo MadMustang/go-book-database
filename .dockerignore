@@ -1,0 +1,14 @@
+#Ignore git related files
+.gitignore
+
+#We don't need the readme
+README.md
+
+#Eliminate any environment files
+.env
+
+#No vscode folders
+.vscode
+
+#Ignore vendor folder
+vendor

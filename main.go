@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 )
 
 //Main Server Function
@@ -18,15 +17,11 @@ func main() {
 	r := mux.NewRouter()
 
 	//Specify server port
-	err := godotenv.Load() //Loads the dotenv file
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	port := os.Getenv("Server_Port") //Grabs the port number from the dotenv
 
 	//Validate that the port exists in the config file
 	if port == "" {
-		log.Fatal("No port number. You must specify port number!")
+		port = "3000"
 	}
 
 	//Test mock data

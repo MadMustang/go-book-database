@@ -1,3 +1,8 @@
 #Ignore all config and environment variables
 .env
 
+#Ignore all VsCode settings
+.vscode
+
+#Ignore vendor folder
+vendor
