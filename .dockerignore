@@ -1,5 +1,6 @@
 #Ignore git related files
 .gitignore
+.git
 
 #We don't need the readme
 README.md
