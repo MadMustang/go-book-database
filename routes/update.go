@@ -18,23 +18,53 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	var book models.Book
 	_ = json.NewDecoder(r.Body).Decode(&book)
 
-	//Itterate & find
-	for index, item := range Books {
-		if item.ID == params["id"] {
+	// Check for the book in the database
+	results, err := Db.Query("SELECT id, title, author FROM books WHERE id=" + params["id"])
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"Response": "Ay Blin. An error occured.",
+		})
+		panic(err.Error()) // proper error handling instead of panic in your app
+	}
 
-			//Delete the book
-			Books = append(Books[:index], Books[index+1:]...)
+	// Initiate local variable
+	var qu models.Book
 
-			//Update the book
-			book.ID = item.ID
-			Books = append(Books, book)
+	// Process data
+	for results.Next() {
 
-			//Return the data of the updated book
+		err := results.Scan(&qu.ID, &qu.Title, &qu.Author)
+		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusAccepted)
-			json.NewEncoder(w).Encode(book)
-			return
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{
+				"Response": "Ay Blin. An error occured.",
+			})
+			panic(err.Error()) // proper error handling instead of panic in your app
 		}
+	}
+
+	// Modify entry in database
+	if qu.ID != "" {
+
+		_, errChange := Db.Query("UPDATE books SET title='" + book.Title + "', author='" + book.Author + "' WHERE id=" + params["id"])
+		if errChange != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{
+				"Response": "Ay Blin. An error occured.",
+			})
+			panic(err.Error()) // proper error handling instead of panic in your app
+		}
+
+		//Return the data of the updated book
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(book)
+		return
+
 	}
 
 	//If the book is not found, send error response

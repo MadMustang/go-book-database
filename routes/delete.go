@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"go-book-database/models"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -13,22 +14,53 @@ func DeleteBook(w http.ResponseWriter, r *http.Request) {
 	//Get Parametters from request
 	params := mux.Vars(r)
 
-	//Itterate & find
-	for index, item := range Books {
-		if item.ID == params["id"] {
+	// Query Database
+	results, err := Db.Query("SELECT id, title, author FROM books WHERE id=" + params["id"])
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"Response": "Ay Blin. An error occured.",
+		})
+		panic(err.Error()) // proper error handling instead of panic in your app
+	}
 
-			//Getting the data of the book
-			b := item
+	// Initiate local variable
+	var qu models.Book
 
-			//Delete book from databse
-			Books = append(Books[:index], Books[index+1:]...)
+	// Process data
+	for results.Next() {
 
-			//Return the data of the deleted book
+		err := results.Scan(&qu.ID, &qu.Title, &qu.Author)
+		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusAccepted)
-			json.NewEncoder(w).Encode(b)
-			return
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{
+				"Response": "Ay Blin. An error occured.",
+			})
+			panic(err.Error()) // proper error handling instead of panic in your app
 		}
+	}
+
+	// Modify entry in database
+	if qu.ID != "" {
+
+		_, errChange := Db.Query("DELETE FROM books WHERE id=" + params["id"])
+		if errChange != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{
+				"Response": "Ay Blin. An error occured.",
+			})
+			panic(err.Error()) // proper error handling instead of panic in your app
+		}
+
+		//Return the data of the deleted book
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(qu)
+		return
+
 	}
 
 	//If the book is not found, send error response
