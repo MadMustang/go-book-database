@@ -4,7 +4,7 @@ FROM golang:1.11.1
 WORKDIR /go/src/go-book-database
 
 #Install Go dep
-RUN go get -u github.com/golang/dep/cmd/dep
+RUN sudo apt install go-dep
 
 #Copy dependencies file
 COPY . .

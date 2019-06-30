@@ -22,6 +22,9 @@ func main() {
 		port = "3000"
 	}
 
+	// Defer database to close
+	defer routes.Db.Close()
+
 	//Running the server
 	fmt.Println("Server started on port " + port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
