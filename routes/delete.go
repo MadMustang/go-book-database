@@ -2,7 +2,7 @@ package routes
 
 import (
 	"encoding/json"
-	"go-book-database/models"
+	"github.com/MadMustang/go-book-database/models"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,7 +11,7 @@ import (
 // DeleteBook : Deleting an existing book from the database/library
 func DeleteBook(w http.ResponseWriter, r *http.Request) {
 
-	//Get Parametters from request
+	//Get Parameters from request
 	params := mux.Vars(r)
 
 	// Query Database

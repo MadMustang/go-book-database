@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"go-book-database/routes"
+	"github.com/MadMustang/go-book-database/routes"
 	"log"
 	"net/http"
 	"os"

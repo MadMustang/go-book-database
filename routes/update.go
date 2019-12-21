@@ -2,7 +2,7 @@ package routes
 
 import (
 	"encoding/json"
-	"go-book-database/models"
+	"github.com/MadMustang/go-book-database/models"
 	"net/http"
 
 	"github.com/gorilla/mux"

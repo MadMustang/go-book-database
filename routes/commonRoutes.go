@@ -3,6 +3,7 @@ package routes
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -11,7 +12,7 @@ import (
 // Database object
 var Db *sql.DB
 
-//Init the data
+// Init the data
 func initDat() *sql.DB {
 
 	// Open up our database connection.
@@ -29,22 +30,26 @@ func initDat() *sql.DB {
 	return db
 }
 
-//NewRouter initiates a new router
+// NewRouter initiates a new router
 func NewRouter() *mux.Router {
 
-	//Initialize the data
+	// Initialize the data
 	Db = initDat()
 
-	//Start new router
+	// Start new router
 	router := mux.NewRouter()
 
-	//Define handlers and their functions
-	router.HandleFunc("/", hello).Methods("GET")
-	router.HandleFunc("/books", GetBooks).Methods("GET")
-	router.HandleFunc("/book/{id}", GetBook).Methods("GET")
-	router.HandleFunc("/book", CreateBook).Methods("POST")
-	router.HandleFunc("/book/{id}", UpdateBook).Methods("PUT")
-	router.HandleFunc("/book/{id}", DeleteBook).Methods("DELETE")
+	// Define sub-routers base on path
+	baseRoute := router.PathPrefix(baseEndpoint).Subrouter()
+	booksRoute := router.PathPrefix(bookEndpoint).Subrouter()
+
+	// Define handlers for each endpoint path
+	baseRoute.HandleFunc("", hello).Methods(http.MethodGet)
+	booksRoute.HandleFunc("", GetBooks).Methods(http.MethodGet)
+	booksRoute.HandleFunc("/{id}", GetBook).Methods(http.MethodGet)
+	booksRoute.HandleFunc("/{id}", CreateBook).Methods(http.MethodPost)
+	booksRoute.HandleFunc("/{id}", UpdateBook).Methods(http.MethodPut)
+	booksRoute.HandleFunc("/{id}", DeleteBook).Methods(http.MethodDelete)
 
 	//Return the router
 	return router

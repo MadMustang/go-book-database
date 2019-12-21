@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"go-book-database/models"
+	"github.com/MadMustang/go-book-database/models"
 
 	"github.com/gorilla/mux"
 )
