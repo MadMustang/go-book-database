@@ -12,7 +12,7 @@
 package routes
 
 // Base endpoint
-const baseEndpoint = "/"
+const baseEndpoint = "/api/v1"
 
 // Endpoint for books
-const bookEndpoint = "/books"
+const bookEndpoint = baseEndpoint + "/books"
