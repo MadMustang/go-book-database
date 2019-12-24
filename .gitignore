@@ -1,8 +1,12 @@
 #Ignore all config and environment variables
 .env
 
-#Ignore all VsCode settings
-.vscode
+#Ignore all ide settings
+.vscode/
+.idea/
 
 #Ignore vendor folder
 vendor
+
+# Executables
+go-book-database

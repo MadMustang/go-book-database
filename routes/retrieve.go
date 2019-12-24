@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"go-book-database/models"
+	"github.com/MadMustang/go-book-database/models"
 
 	"github.com/gorilla/mux"
 )
@@ -12,11 +12,15 @@ import (
 // GetBooks : Retrieving all the books in the database
 func GetBooks(w http.ResponseWriter, r *http.Request) {
 
+	// Database
+	db := initDat()
+	defer db.Close()
+
 	// Initiate local variable for data
 	var retrievedData []models.Book
 
 	// Retrieve data from database
-	results, err := Db.Query("SELECT id, title, author FROM books")
+	results, err := db.Query("SELECT id, title, author FROM books")
 	if err != nil {
 		panic(err.Error()) // proper error handling instead of panic in your app
 	}
@@ -33,7 +37,6 @@ func GetBooks(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(map[string]string{
 				"Response": "Ay Blin. An error occured.",
 			})
-			panic(err.Error()) // proper error handling instead of panic in your app
 		}
 
 		retrievedData = append(retrievedData, qu)
@@ -49,18 +52,21 @@ func GetBooks(w http.ResponseWriter, r *http.Request) {
 // GetBook : Getting a specific book by ID
 func GetBook(w http.ResponseWriter, r *http.Request) {
 
+	// Database
+	db := initDat()
+	defer db.Close()
+
 	//Get parameters from request
 	params := mux.Vars(r)
 
 	// Query Database
-	results, err := Db.Query("SELECT id, title, author FROM books WHERE id=" + params["id"])
+	results, err := db.Query("SELECT id, title, author FROM books WHERE id=" + params["id"])
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
 			"Response": "Ay Blin. An error occured.",
 		})
-		panic(err.Error()) // proper error handling instead of panic in your app
 	}
 
 	// Initiate local variable
@@ -76,7 +82,6 @@ func GetBook(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(map[string]string{
 				"Response": "Ay Blin. An error occured.",
 			})
-			panic(err.Error()) // proper error handling instead of panic in your app
 		}
 	}
 
